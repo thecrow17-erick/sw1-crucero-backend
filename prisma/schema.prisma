@@ -15,12 +15,149 @@ datasource db {
 
 
 model User {
-  id        String @db.Text @id @default(uuid()) @unique
-  name      String @db.VarChar(50)
-  email     String @db.VarChar(50)
-  password  String @db.Text
+  id             String @db.Uuid @id @default(uuid()) @unique
+  name           String @db.VarChar(50)
+  email          String @db.VarChar(50)
+  password       String @db.Text
+  wallet_address String @db.Text
+  status         Boolean @default(true)
 
+  user_log       Log[]
 
-  created_at  DateTime @default(now())
-  updated_ad DateTime @default(now()) @updatedAt
+  createdAt      DateTime @default(now()) @db.Timestamp()
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp()
 }
+
+model Log{
+  id             Int @default(autoincrement()) @id
+  action         String @db.Text
+
+  user_id        String @db.Uuid 
+  user           User @relation(fields: [user_id], references: [id])
+
+
+  createdAt      DateTime @default(now()) @db.Timestamp()
+}
+
+model PaymentCard {
+  id             Int @default(autoincrement()) @id
+  type           typeCard
+  nfc_id         String? @db.Text
+  balance        Decimal @db.Decimal(12,2)
+  status         Boolean @default(true)
+
+
+  createdAt      DateTime @db.Timestamp() @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt @db.Timestamp()
+}
+
+enum typeCard {
+  FISICA
+  VIRTUAL
+}
+
+
+model Operator {
+  id            Int @default(autoincrement()) @id
+  name          String @db.VarChar(60)
+  type          typeOperator
+  address       String @db.VarChar(60)
+  email_corp    String @db.VarChar(50)
+  wallet        String @db.Text @default("")
+  status        Boolean
+
+  employeds     Employed[]
+  
+  createdAt     DateTime @db.Timestamp() @default(now())
+  updatedAt     DateTime @db.Timestamp() @updatedAt @default(now())
+
+}
+
+enum typeOperator {
+  PUBLIC
+  PRIVATE
+}
+
+model Employed{
+  id            String @db.Uuid @default(uuid()) @id
+  name          String @db.VarChar(60)
+  email         String @db.VarChar(50)
+  password      String  @db.Text
+  type          typeEmployed
+  status        Boolean
+
+  operator_id   Int 
+  operator      Operator @relation(fields: [operator_id],references: [id])
+
+  bus           Bus[]
+
+  createdAt     DateTime @db.Timestamp() @default(now())
+  updatedAt     DateTime @db.Timestamp() @updatedAt @default(now())
+}
+
+enum typeEmployed {
+  OWNER
+  ADMIN
+  DRIVER
+}
+
+model Rute {
+  id           Int @id @default(autoincrement()) 
+  name         String @db.VarChar(60)
+  description  String @db.Text
+  origin       Decimal[] @db.Decimal(10,2)
+  destination  Decimal[] @db.Decimal(10,2)
+  vertice      Json @db.Json
+
+  busStop      BusStop[]
+
+  bus          Bus[]
+
+  createdAt    DateTime @db.Timestamp() @default(now())
+  updatedAt    DateTime @db.Timestamp() @updatedAt @default(now())
+}
+
+
+model BusStop{
+  id           Int @id @default(autoincrement())
+  name         String @db.VarChar(60)
+  lat          Decimal @db.Decimal(12,2)
+  lng          Decimal @db.Decimal(12,2)
+  time         Decimal @db.Decimal(3,2)
+
+  rute_id      Int
+  rute         Rute @relation(fields: [rute_id], references: [id])
+
+  createdAt    DateTime @db.Timestamp() @default(now())
+  updatedAt    DateTime @db.Timestamp() @updatedAt @default(now())
+}
+
+
+model Bus {
+  id           Int  @id @default(autoincrement())
+  placa        String @db.VarChar(20)
+  state        stateBus
+
+  driver_id    String @db.Uuid
+  driver       Employed @relation(fields: [driver_id],references: [id])
+
+  rute_id      Int
+  rute         Rute @relation(fields: [rute_id], references: [id])
+
+  createdAt    DateTime @db.Timestamp() @default(now())
+  updatedAt    DateTime @db.Timestamp() @updatedAt @default(now())
+}
+
+enum stateBus {
+  EN_SERVICIO
+  FUERA_DE_SERVICIO
+  EN_MANTENIMIENTO
+  EN_ESPERA
+  EN_TERMINAL
+  EN_RUTA_TERMINAL
+  RETIRADO
+  EMERGENCIA
+}
+
+
+
